@@ -1,0 +1,23 @@
+# Local gateway (127.0.0.1 only). Claude Code / Fabric -> /v1/messages here ->
+# OpenAI chat completions at NVIDIA's hosted endpoint. Keys come from the environment of this process only
+# (fabric/gateway.sh reads them from $TCADCAL_SECRETS_DIR); nothing secret is in this file.
+model_list:
+  # LLM of the Nemotron calibrations of the manuscript: Nemotron 3.5 Super VL (120B-A12B, accepts images). Model card settings:
+  # temperature 1.0 and top_p 0.95 for all tasks, force_nonempty_content for coding agents and tool use.
+  - model_name: nemotron-3.5-super-vl
+    litellm_params:
+      model: openai/nvidia/nemotron-3.5-super-vl-120b-a12b
+      api_base: https://integrate.api.nvidia.com/v1
+      api_key: os.environ/NVIDIA_API_KEY
+      temperature: 1.0
+      top_p: 0.95
+      timeout: 900
+      extra_body:
+        chat_template_kwargs:
+          enable_thinking: true
+          force_nonempty_content: true
+litellm_settings:
+  drop_params: true
+  num_retries: 0                # retries are the orchestrator's (recorded in breaks.jsonl), not hidden here
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY

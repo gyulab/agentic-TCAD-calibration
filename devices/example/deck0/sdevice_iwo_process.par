@@ -1,0 +1,56 @@
+* ============================================================================
+* Sentaurus Device parameter file: bottom-gate IWO transistor.
+*   IWO   : channel material (base parameters from ./IWO.par, epsilon = 9)
+*   HfO2  : gate dielectric and passivation, epsilon = 17 (fixed device input)
+* Token @mu0@ is filled by the harness from the parameter card.
+* ============================================================================
+
+Material = "IWO" {
+   insert = "./IWO.par"
+
+   Scharfetter { taumax = 1, 1 }
+
+   ConstantMobility:
+   { * mu_const = mumax (T/T0)^(-Exponent)
+      mumax = @mu0@, @mu0@   * [cm^2/(Vs)]
+   }
+
+   Bandgap {
+      Chi0           = 4.3        * [eV]  DOI: 10.3390/nano11113070
+      Bgn2Chi        = 0.5        * [1]
+      Eg0            = 2.9        * [eV]  DOI: 10.1088/0953-8984/23/33/334210
+      dEg0(Bennett)     = 0.0
+      dEg0(Slotboom)    = -4.7950e-03
+      dEg0(OldSlotboom) = 0.0
+      dEg0(delAlamo)    = -1.4070e-02
+      alpha          = 4.7300e-04 * [eV K^-1]
+      beta           = 6.3600e+02 * [K]
+      Tpar           = 3.0000e+02 * [K]
+   }
+
+   eDOSMass {
+      Formula = 1
+      a  = 0
+      ml = 0
+      mm = 0.35   * handbook of transparent conductors
+   }
+
+   hDOSMass {
+      Formula = 1
+      a = 0
+      b = 0
+      c = 0
+      d = 0
+      e = 0
+      f = 0
+      g = 0
+      h = 0
+      i = 0
+      mm = 0.35   * handbook of transparent conductors
+   }
+}
+
+Material = "HfO2" {
+   Epsilon_aniso { epsilon = 17 }
+   Epsilon       { epsilon = 17 }
+}

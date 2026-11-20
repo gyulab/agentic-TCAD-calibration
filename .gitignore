@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+env/
+kb_cache/
+support/
+tmp/
+runs/
+experiment/
+/experiment
+/runs

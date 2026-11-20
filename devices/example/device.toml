@@ -1,0 +1,161 @@
+# Device definition read by all three implementations (lib/tcadcal/config.py).
+# This example is the bottom-gate IWO transistor of the manuscript: a 2%-W reference device with two channel
+# lengths and a 4%-W device for the recalibration example. For your own device, copy this folder, change the
+# values and the files next to this one, and set TCADCAL_DEVICE to the copy (see README.md in this folder).
+
+# ---------------------------------------------------------------------------------------------------------------
+# Devices, geometries and the curves used for calibration and for the tests without retuning
+# ---------------------------------------------------------------------------------------------------------------
+# Each device reads experiment/raw/<device>/<device>_VD_p<V_D>V.csv (package root), with "p" for the decimal point.
+# Optional per device: vg_start (V, when its sweep starts above sweep.vg_start) and noise_vg_max (V).
+[devices.ref_L1]
+sample = "BG-IWO 2%-W, L = 1 um"
+geometry = "L1_lov1p5"
+
+[devices.ref_L2]
+sample = "BG-IWO 2%-W, L = 2 um"
+geometry = "L2_lov1p5"
+
+[devices.recal_L1]
+sample = "BG-IWO 4%-W, L = 1 um"
+geometry = "L1_lov1p5"
+vg_start = -0.7
+noise_vg_max = -0.35
+
+# Channel length (inner source/drain edge gap) and gate overlap per side, um. These fill the deck tokens.
+[geometries.L1_lov1p5]
+L_um = 1.0
+Lov_each_um = 1.5
+
+[geometries.L2_lov1p5]
+L_um = 2.0
+Lov_each_um = 1.5
+
+# [device, V_D in V] pairs. "calibration" holds the two calibration curves of one device, the lower V_D first.
+# The other entries are the tests without retuning (postrun.py transfer).
+[splits]
+calibration = [["ref_L1", 0.05], ["ref_L1", 1.0]]
+drain_bias_transfer = [["ref_L1", 0.10], ["ref_L1", 0.20], ["ref_L1", 0.50]]
+length_transfer = [["ref_L2", 0.05], ["ref_L2", 1.0]]
+ext_bias_extrapolation = [["ref_L1", 1.5]]
+ext_L2_more_bias = [["ref_L2", 0.01], ["ref_L2", 0.1], ["ref_L2", 0.2], ["ref_L2", 0.5], ["ref_L2", 1.5]]
+
+# Recalibration example (make_workspace.py --recalibrate): the same roles for a second device. Its two calibration
+# drain biases must be those of [splits].
+[splits_recal]
+calibration = [["recal_L1", 0.05], ["recal_L1", 1.0]]
+drain_bias_transfer = [["recal_L1", 0.10], ["recal_L1", 0.20], ["recal_L1", 0.50]]
+ext_bias_extrapolation = [["recal_L1", 1.2]]
+ext_low_bias = [["recal_L1", 0.01]]
+
+# ---------------------------------------------------------------------------------------------------------------
+# Measured sweep and the current levels of the metrics
+# ---------------------------------------------------------------------------------------------------------------
+[sweep]
+vg_start = -1.0        # V, first forward point (a device may start later, see devices.*.vg_start)
+vg_stop = 2.0          # V, last forward point
+vg_step = 0.05         # V
+noise_vg_max = -0.75   # V, forward points at or below this V_G set the off-state noise scale
+temperature_K = 300.0  # K, measurement temperature (every temperature setting of the deck)
+
+[metrics]
+vth_current_per_square_A = 1.0e-8   # V_th is read at this current x W/L
+vth_level_A = 5.0e-8                # the V_th current of the calibration device (labels and texts)
+ss_window_A = [1.0e-10, 1.0e-7]     # lower and upper current of the SS range
+ss_low_A = { main = 1.0e-9, recal = 1.0e-9 }   # lowest SS window current, by program
+log_floor_A = 1.0e-11               # current floor of the log-current plots and residuals
+balance_floor_A = 2.5e-10           # |I_D| below the detection limit does not enter the terminal-current balance check
+ion_vg = 2.0                        # V, V_G of the I_on point in the diagnostics
+
+# ---------------------------------------------------------------------------------------------------------------
+# Structure, materials and region names (checked on every rendered deck and every mesh read-back)
+# ---------------------------------------------------------------------------------------------------------------
+[structure]
+t_channel_nm = 3.5
+t_gate_dielectric_nm = 7.0
+t_passivation_nm = 5.0
+h_contact_nm = 40.0
+Lov_each_um = 1.5
+W_um = 5.0
+AreaFactor = 5.0
+k_gate_dielectric = 17.0
+k_channel = 9.0
+probe_depths_um = { gate = 0.0001, mid = 0.00175, back = 0.0034 }   # inside the channel film, above the gate interface
+
+[materials]
+channel = "IWO"
+gate_dielectric = "HfO2"
+passivation = "HfO2"
+gate = "Pd"
+contacts = "Pd"
+channel_par_file = "IWO.par"                     # Sentaurus material file of the channel (support file)
+support_files = ["IWO.par", "datexcodes.txt"]    # copied from TCAD_SUPPORT_DIR into every workspace
+
+[regions]
+channel = "Semiconductor"
+gate_dielectric = "Gox1"
+passivation_top = "HfO2_passivation_channel_top"
+
+# SDE defines that carry the structure values in deck0/sde_dvs.cmd, and the factor that converts each to nm.
+[deck_variables]
+t_channel = { name = "Tch_nm", to_nm = 1.0 }
+t_gate_dielectric = { name = "Tgox_HFO2_um", to_nm = 1000.0 }
+t_passivation = { name = "Tpass_HFO2_um", to_nm = 1000.0 }
+contact_height_define = '\(define y_sd_top \(\+ y_ch_top 40e-3\)\)'   # regular expression, "" = no check
+
+# Literature reference for the gate metal work function (illustration in the diagnostics only).
+[gate_wf_reference]
+value_eV = 4.79
+material = "Pd on ALD HfO2/SiOx/Si"
+source = "D. Gu, S. K. Dey, P. Majhi, Appl. Phys. Lett. 89, 082907 (2006), doi:10.1063/1.2336718"
+note = "reference from another process; not a measured value for this device"
+
+# ---------------------------------------------------------------------------------------------------------------
+# Mesh refinement of the structure deck (lengths in um), tuned to the channel film
+# ---------------------------------------------------------------------------------------------------------------
+[mesh]
+production = "G2"
+
+[mesh.specs.G]
+bg_max = [0.02, 0.02]
+bg_min = [0.001, 0.0005]
+ch_max = [0.02, 0.0005]
+ch_min = [0.0005, 0.0001]
+ch_first = 0.0002
+ch_ratio = 1.5
+ox_max = [0.02, 0.0035]
+ox_min = [0.001, 0.0005]
+edge_min_x = 0.0005
+edge_max_x = 0.02
+edge_ratio = 1.35
+edge_half_width = 0.1
+
+[mesh.specs.G2]
+bg_max = [0.02, 0.02]
+bg_min = [0.001, 0.0005]
+ch_max = [0.01, 0.00035]
+ch_min = [0.0005, 0.0001]
+ch_first = 0.00015
+ch_ratio = 1.4
+ox_max = [0.01, 0.002]
+ox_min = [0.001, 0.0005]
+edge_min_x = 0.0003
+edge_max_x = 0.01
+edge_ratio = 1.25
+edge_half_width = 0.1
+
+# ---------------------------------------------------------------------------------------------------------------
+# Wording of the agent instructions (filled into [[...]] places of templates/ and skills/)
+# ---------------------------------------------------------------------------------------------------------------
+[text]
+device = "one fabricated bottom-gate IWO"           # "...model of <device>\ntransistor"
+reference_device = "2 % W, same structure"           # the reference device of a recalibration
+recal_device = "4 % W device"                        # the recalibrated device
+recal_difference = "channel composition"             # what differs between the two devices
+recal_kind = "composition-specific"                  # adjective for the recalibration and its gate offset
+par_template = "silicon"                             # the material file the channel parameter file was built from
+region_names = """region `Semiconductor` (material IWO), `Gox1`
+  (HfO2 gate dielectric), `HfO2_passivation_channel_top`, `HfO2_passivation_source_top`,
+  `HfO2_passivation_drain_top`, `HfO2_passivation_source_inner_vertical_sidewall`,
+  `HfO2_passivation_drain_inner_vertical_sidewall`. Interfaces are written
+  `RegionInterface="Gox1/Semiconductor"`."""
